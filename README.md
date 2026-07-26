@@ -1,11 +1,11 @@
-# 🚀 ResumeForge AI
+# 🚀 Resume-Optimizer
 
 **AI-powered, end-to-end job application automation** — built on [n8n](https://n8n.io/), Google Workspace, and the Google Gemini API.
 
-> 💡 **Suggested name:** `ResumeForge AI`
+> 💡 **Suggested name:** `Resume-Optimizer`
 > *(Alternatives if you want a different vibe: `ApplyFlow AI`, `JobPilot Resume`, `AutoApply AI`)*
 
-ResumeForge AI automatically searches LinkedIn for jobs matching your preferences, extracts the full job description, and uses Google Gemini to rewrite your resume so it's tailored and ATS-optimized for that exact posting — then saves everything to Google Docs and logs it in a Google Sheet. No manual copy-pasting, no generic one-size-fits-all resume.
+Resume-Optimizer automatically searches LinkedIn for jobs matching your preferences, extracts the full job description, and uses Google Gemini to rewrite your resume so it's tailored and ATS-optimized for that exact posting — then saves everything to Google Docs and logs it in a Google Sheet. No manual copy-pasting, no generic one-size-fits-all resume.
 
 ---
 
