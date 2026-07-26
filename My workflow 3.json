@@ -1,0 +1,574 @@
+{
+  "name": "My workflow 3",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "e986e7fb-6a8c-41f1-9454-689aa45ceac4",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "18yCj5_IWySkf44OBDADpHixgGbIly9RAk3fLV-azCcM",
+          "mode": "list",
+          "cachedResultName": "Job finder",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/18yCj5_IWySkf44OBDADpHixgGbIly9RAk3fLV-azCcM/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Preference",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/18yCj5_IWySkf44OBDADpHixgGbIly9RAk3fLV-azCcM/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        208,
+        -128
+      ],
+      "id": "f83d116d-4f3b-4872-8808-ba86a11007f9",
+      "name": "Get row(s) in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "hBUML1A7IwQECq2G",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "let url = \"https://www.linkedin.com/jobs/search/?f_TPR=r86400\"\n\nconst keyword = $input.first().json.Keyword\nconst location = $input.first().json.Location\nconst experienceLevel = $input.first().json['Experience Level']\nconst remote = $input.first().json.Remote\nconst jobType = $input.first().json['job type']\nconst easyApply = $input.first().json['Easy Apply']\n\nif (keyword != \"\") {\n  url += `&keywords=${keyword}`;\n}\n\nif (location != \"\") {\n  url += `&location=${location}`;\n}\n\nif (experienceLevel !== \"\") {\n  // Transform experience levels to LinkedIn codes\n  // Internship -> 1, Entry level -> 2, Associate -> 3\n  // Mid-Senior level -> 4, Director -> 5, Executive -> 6\n  const transformedExperiences = experienceLevel\n    .split(\",\")\n    .map((exp) => {\n      switch (exp.trim()) {\n        case \"Internship\": return \"1\";\n        case \"Entry level\": return \"2\";\n        case \"Associate\": return \"3\";\n        case \"Mid-Senior level\": return \"4\";\n        case \"Director\": return \"5\";\n        case \"Executive\": return \"6\";\n        default: return \"\";\n      }\n    })\n    .filter(Boolean);\n  url += `&f_E=${transformedExperiences.join(\",\")}`;\n}\n\nif (remote.length != \"\") {\n  // Transform remote options to LinkedIn codes\n  // On-Site -> 1, Remote -> 2, Hybrid -> 3\n  const transformedRemote = remote\n    .split(\",\")\n    .map((e) => {\n      switch (e.trim()) {\n        case \"Remote\": return \"2\";\n        case \"Hybrid\": return \"3\";\n        case \"On-Site\": return \"1\";\n        default: return \"\";\n      }\n    })\n    .filter(Boolean);\n  url += `&f_WT=${transformedRemote.join(\",\")}`;\n}\n\nif (jobType != \"\") {\n  // Transform job types to LinkedIn codes\n  // Full-time -> F, Part-time -> P, Contract -> C, etc.\n  const transformedJobType = jobType\n    .split(\",\")\n    .map((type) => type.trim().charAt(0).toUpperCase());\n  url += `&f_JT=${transformedJobType.join(\",\")}`;\n}\n\nif (easyApply != \"\") {\n  url += \"&f_EA=true\";\n}\n\nreturn {url}"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        400,
+        -224
+      ],
+      "id": "902dfcb8-cf9c-40a8-951b-d96e2e1e7044",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.url }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        576,
+        -368
+      ],
+      "id": "060c137d-0d32-4c1e-9c8a-eb84da8de4e5",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "operation": "extractHtmlContent",
+        "extractionValues": {
+          "values": [
+            {
+              "key": "joblinks",
+              "cssSelector": "a.base-card__full-link",
+              "returnValue": "attribute",
+              "attribute": "href",
+              "returnArray": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.html",
+      "typeVersion": 1.2,
+      "position": [
+        752,
+        -224
+      ],
+      "id": "70ce6df4-3c25-4fe7-b1d8-9d2975c94c65",
+      "name": "HTML"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "joblinks",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        960,
+        -80
+      ],
+      "id": "8e4ece90-0880-4898-aa9f-4940bc3bdd0b",
+      "name": "Split Out"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        1168,
+        -80
+      ],
+      "id": "1b9dd3e8-6f5b-4a65-a50d-759a0036b67f",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.joblinks }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1376,
+        16
+      ],
+      "id": "133695d0-a7dc-4f17-9787-edf68018b6b9",
+      "name": "HTTP Request1"
+    },
+    {
+      "parameters": {
+        "operation": "extractHtmlContent",
+        "extractionValues": {
+          "values": [
+            {
+              "key": "title",
+              "cssSelector": "h1.top-card-layout__title"
+            },
+            {
+              "key": "company",
+              "cssSelector": "a.topcard__org-name-link"
+            },
+            {
+              "key": "location",
+              "cssSelector": "span.topcard__flavor--bullet"
+            },
+            {
+              "key": "descriptionHtml",
+              "cssSelector": "div.show-more-less-html__markup",
+              "returnValue": "html"
+            },
+            {
+              "key": "criteria",
+              "cssSelector": "span.description__job-criteria-text",
+              "returnArray": true
+            },
+            {
+              "key": "canonicalUrl",
+              "cssSelector": "link[rel=\"canonical\"]",
+              "returnValue": "attribute",
+              "attribute": "href"
+            },
+            {
+              "key": "jsonLd",
+              "cssSelector": "script[type=\"application/ld+json\"]"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.html",
+      "typeVersion": 1.2,
+      "position": [
+        1152,
+        192
+      ],
+      "id": "cf9e0d29-5a6a-4d9f-b936-39cf38077830",
+      "name": "HTML1"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are an expert ATS (Applicant Tracking System) resume optimization specialist and professional resume writer.\n\n## YOUR TASK\nYou will receive:\n1. A job posting's details (title, company, location, description, required skills, employment type, seniority level)\n2. A candidate's existing resume template\n\nYour job is to rewrite the resume so it scores as highly as possible against this specific job posting's ATS scan, while remaining 100% truthful — you must never invent skills, employers, degrees, dates, or experience that isn't in the original resume.\n\n## JOB POSTING DETAILS\nTitle: {{ $json.title }}\nCompany: {{ $json.company }}\nLocation: {{ $json.location }}\nEmployment Type: {{ $json.criteria[1] }}\nSeniority Level: {{ $json.criteria[0] }}\nJob Function: {{ $json.criteria[2] }}\nIndustries: {{ $json.canonicalUrl }}\n\n\nFull Job Description:\n{{ $json.descriptionHtml }}\n\n## CANDIDATE'S CURRENT RESUME\n\n[ DEBAYANI DAS\nComputer Science Undergraduate \ndebayanidas//@gmail.com | +91 65642158545 | DumDumCantonmenjgut,kolkata-70054028\nPROFILE INFO \nEnthusiastic Computer Science student with a passion for software development, problem-solving, and AI.\nSeeking an opportunity to apply my coding skills and analytical thinking in a dynamic environment.\nEnthusiastic about building scalable solutions, participating in hackathons, and continuously learning\nemerging technologies. Seeking opportunities to contribute and grow in a dynamic tech environment.\nTECHNICAL SKILLS\nProgramming Languages: Python,\nJava, C++,C  \nWebDev: HTML, CSS, JavaScript,\nReact.js\nEXPERIENCE\nDatabases: MySQL, MongoDB\nTools: Git, VS Code, Oracle\nOther: Problem-Solving,\nTeam Collaboration, Agile\nMethodology\nSmart India Hackathon (SIH) participants – Built a Smart Tourism Assistant using Python & Java.  \nGoogle Solution Challenge – Developed a community-driven waste management app.  \nCompleted a virtual internship in web development at Codsoft. \nDesigned and developed a responsive website using HTML, CSS, JavaScript, and React.\nAI and Data Skill internship from Ybi Foundation. \nHackfest participants – Create “Shilpobojha” the idea of Sustainable Business. \nImplemented data structures and algorithms from scratch for better problem-solving\nHands-on experience in Agile project workflows, UI/UX design, and usability testing through the\nxpmc xpro Program for Luxestay Villa.\nCERTIFICATIONS\nGoogleAssociate Cloud Engineer – Google Cloud \nFull-Stack Web Development – Udemy , CodSoft \nData Structures & Algorithms – GeeksforGeeks , Coding Ninjas\nEDUCATION\nSister Nivedita University | 2023-Ongoing\nBachelor of Technology in Computer Science Engineering\nChrist Church Girls’ High School (H.S)\n12th - 80% \n10th - 82%\nADDITIONAL INFORMATION\nLanguages : English | Spanish | Hindi\nOthers Skill : Problem-Solving & Critical Thinking | Leadership & Initiative | Continuous\nLearning . \nLinks :  Linkedin- www.linkedin.com/in/debhgvfgayani-das-952b3hfv12b7 | GitHub\nhttps://github.com/Debayhvhani1\n]\n\n## ATS OPTIMIZATION RULES\n\n1. **Keyword matching**: Identify the exact keywords, tools, technologies, certifications, and phrases used in the job description (especially \"Must have skills\" and \"Good to have skills\"). Naturally weave matching terms into the resume's Skills, Summary, and Experience sections — using the same terminology the job posting uses (e.g. if the JD says \"Oracle Primavera Cloud,\" don't just write \"project management software\").\n\n2. **Never fabricate**: Only include skills/tools/experience that already exist somewhere in the candidate's original resume. If the JD wants a skill the candidate doesn't have, do not add it. You may rephrase existing experience to surface relevant transferable skills, but do not invent new employers, titles, tools, certifications, or metrics.\n\n3. **Professional summary**: Rewrite the summary/objective (2–4 sentences) to mirror the job title and top 3–5 required skills from the posting, positioning the candidate as a strong match.\n\n4. **Reorder & emphasize**: Move the most relevant skills and experience bullets higher in each section. Deprioritize (but don't delete) less relevant content.\n\n5. **Quantify where possible**: Keep or enhance existing quantified achievements (%, $, time saved, team size) — ATS and recruiters both weight measurable impact highly.\n\n6. **Standard section headers**: Use conventional ATS-parsable headers only: \"Professional Summary,\" \"Skills,\" \"Work Experience,\" \"Education,\" \"Certifications.\" No creative or unconventional header names.\n\n7. **ATS-safe formatting**:\n   - No tables, text boxes, columns, headers/footers, or images\n   - No special characters, emojis, or graphics\n   - Standard bullet points (• or -) only\n   - Standard fonts implied (no formatting instructions needed — plain text output)\n   - Dates in a consistent format (e.g., \"Jan 2023 – Present\")\n   - Spell out acronyms at least once if the JD uses the full term (e.g., \"Application Programming Interface (API)\")\n\n8. **Skills section**: Present as a clean list or comma-separated line, grouped logically (e.g., \"Technical Skills,\" \"Tools,\" \"Soft Skills\") if the original resume does this — otherwise keep the candidate's existing structure. Prioritize skills mentioned in the JD first.\n\n9. **Length**: Preserve the original resume's overall length and structure — don't pad or drastically shorten unless doing so improves relevance density.\n\n10. **Truthfulness check**: Before finalizing, re-verify every claim in your rewritten resume traces back to something explicitly stated in the candidate's original resume.\n\n## OUTPUT FORMAT\n\nOutput ONLY the final rewritten resume as clean plain text, ready to be pasted directly into a Google Doc. Do not include:\n- Any preamble, explanation, or commentary\n- Markdown formatting symbols (no #, **, etc.)\n- Notes about what you changed\n- Anything other than the resume content itself\n\nUse simple line breaks and plain bullet characters (•) for structure. The output should look like a complete, ready-to-send resume document from the first line to the last.",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        1296,
+        288
+      ],
+      "id": "389f3d67-81a0-4702-9d6c-6f0680078032",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        1296,
+        480
+      ],
+      "id": "c9359e9a-f161-4750-9d3d-a08404471b23",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "bhiIi367lwfy9DwX",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "folderId": "1OplLzqOkkQvd30yO_acVzUK8IqGdAnhU",
+        "title": "My Resume"
+      },
+      "type": "n8n-nodes-base.googleDocs",
+      "typeVersion": 2,
+      "position": [
+        1616,
+        192
+      ],
+      "id": "fe0bc9bc-6939-4061-bbb8-a2d911337d98",
+      "name": "Create a document",
+      "credentials": {
+        "googleDocsOAuth2Api": {
+          "id": "swcZkf3zsYGvqgko",
+          "name": "Google Docs account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentURL": "={{ $json.id }}",
+        "actionsUi": {
+          "actionFields": [
+            {
+              "action": "insert",
+              "text": "={{ $('AI Agent').item.json.output }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.googleDocs",
+      "typeVersion": 2,
+      "position": [
+        1808,
+        192
+      ],
+      "id": "eefe593b-d03f-4029-a35b-c436ed02b1ae",
+      "name": "Update a document",
+      "credentials": {
+        "googleDocsOAuth2Api": {
+          "id": "swcZkf3zsYGvqgko",
+          "name": "Google Docs account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "18yCj5_IWySkf44OBDADpHixgGbIly9RAk3fLV-azCcM",
+          "mode": "list",
+          "cachedResultName": "Job finder",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/18yCj5_IWySkf44OBDADpHixgGbIly9RAk3fLV-azCcM/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1362797494,
+          "mode": "list",
+          "cachedResultName": "Sheet2",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/18yCj5_IWySkf44OBDADpHixgGbIly9RAk3fLV-azCcM/edit#gid=1362797494"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Apply Link": "={{ $('Loop Over Items').item.json.joblinks }}",
+            "Resume Link": "=https://docs.google.com/document/d/{{ $('Update a document').item.json.documentId }}/edit",
+            "Description": "={{ $json.descriptionHtml }}",
+            "Title": "={{ $('HTML1').item.json.title }}",
+            "Company": "={{ $('HTML1').item.json.company }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Apply Link",
+              "displayName": "Apply Link",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Resume Link",
+              "displayName": "Resume Link",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Description",
+              "displayName": "Description",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Title",
+              "displayName": "Title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Company",
+              "displayName": "Company",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        2224,
+        192
+      ],
+      "id": "20268635-52e5-425e-bb57-acc2470eeab7",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "hBUML1A7IwQECq2G",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "503a3d7e-a05e-45d1-b0d1-3cf920bfc2a1",
+              "name": "descriptionHtml",
+              "value": "={{ $('HTML1').item.json.descriptionHtml.replace(/<[^>]*>/g, ' ') }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2016,
+        192
+      ],
+      "id": "b5412eb2-4fbe-4c79-858a-06b17340d642",
+      "name": "Edit Fields"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "HTML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTML": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [],
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request1": {
+      "main": [
+        [
+          {
+            "node": "HTML1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTML1": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Create a document",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create a document": {
+      "main": [
+        [
+          {
+            "node": "Update a document",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update a document": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append row in sheet": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "7e044262-48bd-408b-b764-95d19e2ab4f5",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "942eb91553263a50aa2bf1bcfce4d42aba0414c0ebe2a339a73ebedfa7f9dc6c"
+  },
+  "nodeGroups": [],
+  "id": "Ej57ODCPKnBSSzfr",
+  "tags": []
+}
